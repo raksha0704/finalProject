@@ -14,8 +14,21 @@ float prevAvgXR = 0;
 float prevAvgYR = 0;
 boolean player1Circle = false;
 boolean player2Circle = false;
+float avgXL;
+float avgYL;
+float avgXR ;
+float avgYR ;
+
+//intro
+boolean intro = true;
+boolean player1Top = false;
+boolean player1Bottom = false;
+boolean player2Top = false;
+boolean player2Bottom = false;
+int gameBeginsIn = 5;
 
 //pong
+PImage pong;
 PVector location;
 PVector velocity;
 float bar1Y = 0;
@@ -29,8 +42,8 @@ int maxScore = 100;
 float[][] ballTrail = new float[5][2];
 int ballCounter = 0;
 int[] scoreUpdate = new int[]{0,0};
-color bar1 = 0;
-color bar2 = 0;
+color bar1 = 255;
+color bar2 = 255;
 
 
 
@@ -38,6 +51,11 @@ color bar2 = 0;
 SoundFile file;
 Amplitude amp;
 AudioIn in;
+float duration = 0;
+float songTimer = 0;
+String[] songs = {"best.mp3","cake.mp3","best.mp3"};
+int songTracker = -1;
+int[] songDurations = new int[]{67,73,67};
 
 //time
 int time;
@@ -50,6 +68,8 @@ void setup() {
   kinect2.initDevice();
   img = createImage(kinect2.depthWidth, kinect2.depthHeight, RGB);
   println(kinect2.depthHeight);
+  
+  pong = loadImage("pong.jpg");
   //img = createImage(w, kinect2.depthHeight, RGB);
   location = new PVector(100,100);
   velocity = new PVector(3,3.5);
@@ -63,6 +83,9 @@ void setup() {
   //sound    
   //file = new SoundFile(this, "best.mp3");
   //file.play();
+  songTimer = millis();
+  
+  
   // Create an Input stream which is routed into the Amplitude analyzer
   amp = new Amplitude(this);
   in = new AudioIn(this, 0);
@@ -70,9 +93,10 @@ void setup() {
   amp.input(in);
 }
 
-void keyPressed(){
-  beginGame = true;
-}
+//void keyPressed(){
+//  beginGame = true;
+//  intro = false;
+//}
 
 void draw() {
   background(0);
@@ -132,10 +156,10 @@ void draw() {
   //img.resize(width, height);
   image(img, 0, 0);
 
-  float avgXL = sumXL / totalPixelsL;
-  float avgYL = sumYL / totalPixelsL;
-  float avgXR = sumXR / totalPixelsR;
-  float avgYR = sumYR / totalPixelsR;
+  avgXL = sumXL / totalPixelsL;
+  avgYL = sumYL / totalPixelsL;
+  avgXR = sumXR / totalPixelsR;
+  avgYR = sumYR / totalPixelsR;
   //print(sumXL+" ");
   //println(avgXL);
   if(totalPixelsL < 500)
@@ -181,6 +205,9 @@ void draw() {
   //textSize(32);
   //text(minThresh + " " + maxThresh, 10, 64);
   
+  if(intro){
+    showIntro(); 
+  }
   if(beginGame){
     //ping pong stuff
     //create bars
@@ -188,7 +215,22 @@ void draw() {
     //rect(10, avgYR-20, 20, 40);
     //rect(670, avgYL-20, 20, 40);
     
-    //play music and visual
+    //sound
+    println(millis() - songTimer);
+    //println(duration);
+    if(millis() - songTimer >= 1000*duration){
+      println("new spng");
+       if(songTracker < songs.length-1){
+         songTracker++;
+         if(songTracker >0)
+           file.stop();
+         file = new SoundFile(this, songs[songTracker]);
+         file.play();
+         duration = songDurations[songTracker];
+         songTimer = millis();
+       }
+    }
+    //visualize sound
     audioVisual();
     
    
@@ -268,10 +310,16 @@ void draw() {
       ballCounter = 0;
     
     noStroke();
-    int brightness = 150;
+    int brightness = 200;
     for(int i = 0; i < 5; i++){
-       fill(175,brightness);
-       brightness-=50;
+       fill(225,brightness);
+       //if(i == 4){  //highlight the first ball
+       //  strokeWeight(5);
+       //  stroke(100);
+       //} 
+       //else
+       //  noStroke();
+       brightness-=20;
        ellipse(ballTrail[i][0], ballTrail[i][1], 16,16);
     }
     
@@ -335,7 +383,7 @@ void audioVisual(){
         step+=60;
         
       //extra for loud music
-      if(amp.analyze()*100 > 1){
+      if(amp.analyze()*1000 > 1){
           if(step > 200)
             fill(random(200),150,150,random(150,255));
           else  
@@ -343,6 +391,19 @@ void audioVisual(){
             
           noStroke();
           ellipse(0, random(step), 4, 4);
+      }
+      
+      //louder??
+      if(amp.analyze()*10 > 1){
+          //if(step > 200)
+          //  fill(random(200),150,150,random(150,255));
+          //else  
+          //  fill(220,220+random(25),220);
+            
+          //noStroke();
+          //ellipse(0, random(step), 4, 4);
+          fill(255, 255, 255);
+          ellipse(0, random(200, 400), 10, 10);
       }
     }
   popMatrix();
@@ -378,4 +439,71 @@ void sparks(float x, float y){
        vertex(0,0);
      endShape();
    popMatrix();
+}
+
+void showIntro(){
+  fill(255);
+  textSize(20);
+  text("Let's play",width/2 - 45,20);
+  image(pong, 170, 25);
+  
+  //info 
+  textSize(15);
+  text("Move the bar from one end to the other",width/2 - 140,200);
+  text("using your paddle to begin the game",width/2 - 130,220);
+  
+  //bars
+  noStroke();
+  fill(bar1);
+  //bar1Y = map(avgYR,50,300,0 ,height-barLength);
+  //bar2Y = map(avgYL,50,300, 0 ,height-barLength);
+  bar1Y = map(mouseY,50,300,0 ,height-barLength);
+  bar2Y = map(mouseY,50,300, 0 ,height-barLength);
+  rect(0,bar1Y,barWidth,barLength);
+  fill(bar2);
+  rect(width-barWidth,bar2Y,barWidth,barLength);
+  
+  avgYL = mouseY;
+  avgYR = mouseY;
+  
+  //check for bar position
+  if(avgYL < barLength){
+    println(mouseY);
+    player1Top = true;
+  }
+  if(avgYL > height - barLength){
+    println(mouseY);
+    player1Bottom = true;
+  }
+  if(avgYR < barLength){
+    player2Top = true;
+  }
+  if(avgYR > height - barLength){
+    player2Bottom = true;
+  }
+  
+  if(player1Top && player1Bottom){
+    text("Good job, Player 1", 50, 300);
+  }
+  if(player2Top && player2Bottom){
+    text("Good job, Player 2", 350, 300);
+  }
+  
+  //game begins
+  if(player1Top && player1Bottom && player2Top && player2Bottom){
+    //background(0);
+    fill(0);
+    rect(width/2 -200, height/2-100, 400, 150);
+    fill(255);
+    textSize(20);
+    text("Game begins in",  width/2-80, height/2-50);
+    textSize(40);
+    text(gameBeginsIn,  width/2, height/2);
+    gameBeginsIn--;
+    if(gameBeginsIn == 0){
+        intro = false;
+        beginGame = true;
+    }
+  }
+  
 }
