@@ -38,12 +38,13 @@ int barWidth = 10;
 int player1Score = 0;
 int player2Score = 0;
 boolean beginGame = false;
-int maxScore = 10;
+int maxScore = 100;
 float[][] ballTrail = new float[5][2];
 int ballCounter = 0;
 int[] scoreUpdate = new int[]{0,0};
 color bar1 = 255;
 color bar2 = 255;
+IntroBall bouncingBall;
 
 
 
@@ -53,9 +54,9 @@ Amplitude amp;
 AudioIn in;
 float duration = 0;
 float songTimer = 0;
-String[] songs = {"best.mp3","cake.mp3","theway.mp3"};
+String[] songs = {"best.mp3","cake.mp3","happy.flac"};
 int songTracker = -1;
-int[] songDurations = new int[]{67,73,67};
+int[] songDurations = new int[]{69,73,97};
 
 //time
 int time;
@@ -63,12 +64,15 @@ int wait = 10000;
 
 void setup() {
   size(512, 424);
+  //kinect is used to get the depth of images in view
   kinect2 = new Kinect2(this);
   kinect2.initDepth();
   kinect2.initDevice();
   img = createImage(kinect2.depthWidth, kinect2.depthHeight, RGB);
   println(kinect2.depthHeight);
   
+  //bouncing ball for intro
+  bouncingBall = new IntroBall();
   pong = loadImage("pong.jpg");
   //img = createImage(w, kinect2.depthHeight, RGB);
   location = new PVector(100,100);
@@ -95,20 +99,16 @@ void setup() {
 
 }
 
-//void keyPressed(){
-//  beginGame = true;
-//  intro = false;
-//}
+void keyPressed(){
+  beginGame = true;
+  intro = false;
+}
 
 void draw() {
 
   background(0);
 
   img.loadPixels();
-
-  //minThresh = map(mouseX, 0, width, 0, 4500);
-  //maxThresh = map(mouseY, 0, height, 0, 4500);
-
 
   // Get the raw depth as array of integers
   int[] depth = kinect2.getRawDepth();
@@ -128,8 +128,9 @@ void draw() {
       int d = depth[offset];
 
       if (d > minThresh && d < maxThresh && x > 275) {
-        
+       //spot things near the camera
         if (d < minThresh+500) {
+          //idetify the hand in front of the person's body
           //img.pixels[offset] = color(255, 0, 150, 100);
           player2Circle = true;
           sumXL += x;
@@ -138,6 +139,7 @@ void draw() {
           img.pixels[offset] = color(0);
         }
         else{
+            //pink
            img.pixels[offset] = color(255, 0, 150, 100); 
         }
           
@@ -152,6 +154,7 @@ void draw() {
           totalPixelsR++;
         }
         else{
+          //violet
           img.pixels[offset] = color(150, 0, 200, 100);
         }
           
@@ -180,18 +183,7 @@ void draw() {
     avgYR = prevAvgYR;
   else
     prevAvgYR = avgYR;  
-  //if(sumXL <200 || sumXR<200 ){
-  //   //println(prevAvgXL);
-  //   avgYL = 250; 
-  //   avgYR = 250; 
-  //}
-  //else{
-  //   println(prevAvgXL);
-  //   prevAvgXL = avgXL; 
-  //   prevAvgXR = avgXR; 
-  //   prevAvgYL = avgYL; 
-  //   prevAvgYR = avgYR; 
-  //}
+
   
   //if(player1Circle)
   //  fill(150, 0, 255);
@@ -206,14 +198,6 @@ void draw() {
   //ellipse(avgXR, avgYR, 64, 64);
 
 
-  //for (int i = 0; i < 10; i++) {
-  //  ps.addParticle(avgX, avgY);
-  //}
-  //ps.run();
-
-  //fill(255);
-  //textSize(32);
-  //text(minThresh + " " + maxThresh, 10, 64);
   
   if(intro){
     showIntro(); 
@@ -228,14 +212,16 @@ void draw() {
     //sound
     println(millis() - songTimer);
     //println(duration);
+    //change song after sometime
     if(millis() - songTimer >= 1000*duration){
-      println("new spng");
+      println("new song");
        if(songTracker < songs.length-1){
          songTracker++;
          if(songTracker >0)
            file.stop();
          file = new SoundFile(this, songs[songTracker]);
-         //file.play();
+         file.play();
+         //file.setVolume(0.2);
          duration = songDurations[songTracker];
          songTimer = millis();
        }
@@ -339,6 +325,8 @@ void draw() {
     velocity.y += (velocity.y>0?0.004:-0.004);
     
     
+    
+    //reverse path - gameplay mechanic
     if(millis() - time >= wait){
       time = millis();//also update the stored time
       wait+= random(-2000, 2000);
@@ -413,7 +401,7 @@ void audioVisual(){
           //noStroke();
           //ellipse(0, random(step), 4, 4);
           fill(200, 200, random(200,255),150);
-          ellipse(0, random(150, 300), 6, 6);
+          ellipse(0, random(100, 200), 6, 6);
       }
     }
   popMatrix();
@@ -452,6 +440,9 @@ void sparks(float x, float y){
 }
 
 void showIntro(){
+  //ball
+  bouncingBall.bounce();
+  
   fill(255);
   textSize(20);
   text("Let's play",width/2 - 45,20);
@@ -460,7 +451,7 @@ void showIntro(){
   //info 
   textSize(15);
   text("Move the bar from one end to the other",width/2 - 140,200);
-  text("using your paddle to begin the game",width/2 - 130,220);
+  text("using your hand to begin the game",width/2 - 130,220);
   
   //bars
   noStroke();
@@ -523,4 +514,32 @@ void showIntro(){
     //}
   }
   
+}
+
+//ball bouncing on the paddle
+class IntroBall{
+  int x;
+  int y;
+  int jumpHeight;
+  int baseY;
+  int baseX;
+  int dir = -1;
+  
+  IntroBall(){
+    this.x = width/2;
+    this.y = this.baseY = 350;
+    this.jumpHeight = 75;
+    this.baseX = width/2-25;
+  }
+  
+  void bounce(){
+    if(this.y < baseY-jumpHeight || this.y > baseY)
+    {
+        dir *= -1;
+    }
+    this.y+= 2*dir;
+    fill(255);
+    ellipse(this.x, this.y, 10, 10);
+    rect(baseX, baseY, 50,10);
+  }
 }
