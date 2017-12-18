@@ -38,7 +38,7 @@ int barWidth = 10;
 int player1Score = 0;
 int player2Score = 0;
 boolean beginGame = false;
-int maxScore = 100;
+int maxScore = 10;
 float[][] ballTrail = new float[5][2];
 int ballCounter = 0;
 int[] scoreUpdate = new int[]{0,0};
@@ -54,9 +54,10 @@ Amplitude amp;
 AudioIn in;
 float duration = 0;
 float songTimer = 0;
-String[] songs = {"best.mp3","cake.mp3","happy.flac"};
+String[] songs = {"best.mp3","cake.mp3","happy.flac", "best.mp3","cake.mp3","happy.flac"};
 int songTracker = -1;
-int[] songDurations = new int[]{69,73,97};
+int[] songDurations = new int[]{68,73,97,68,73,97};
+SoundFile pongSound;
 
 //time
 int time;
@@ -87,6 +88,7 @@ void setup() {
   //sound    
   //file = new SoundFile(this, "best.mp3");
   //file.play();
+  pongSound = new SoundFile(this, "pong.mp3");
   songTimer = millis();
   
   
@@ -381,7 +383,7 @@ void audioVisual(){
         step+=60;
         
       //extra for loud music
-      if(amp.analyze()*1000 > 1){
+      if(amp.analyze()*100 > 1){
           if(step > 200)
             fill(random(200),150,150,random(150,255));
           else  
@@ -392,7 +394,7 @@ void audioVisual(){
       }
       
       //louder??
-      if(amp.analyze()*100 > 1){
+      if(amp.analyze()*10 > 1){
           //if(step > 200)
           //  fill(random(200),150,150,random(150,255));
           //else  
@@ -536,6 +538,9 @@ class IntroBall{
     if(this.y < baseY-jumpHeight || this.y > baseY)
     {
         dir *= -1;
+        if(this.y > baseY){
+            //pongSound.play();
+        }
     }
     this.y+= 2*dir;
     fill(255);
