@@ -1,12 +1,11 @@
 import org.openkinect.processing.*;
 import processing.sound.*;
 
-
 // Kinect Library object
 Kinect2 kinect2;
 
 float minThresh = 500;
-float maxThresh = 1400;
+float maxThresh = 1500;
 PImage img;
 float prevAvgXL = 0;
 float prevAvgYL = 0;
@@ -18,6 +17,7 @@ float avgXL;
 float avgYL;
 float avgXR ;
 float avgYR ;
+float fps;
 
 //intro
 boolean intro = true;
@@ -38,7 +38,7 @@ int barWidth = 10;
 int player1Score = 0;
 int player2Score = 0;
 boolean beginGame = false;
-int maxScore = 100;
+int maxScore = 10;
 float[][] ballTrail = new float[5][2];
 int ballCounter = 0;
 int[] scoreUpdate = new int[]{0,0};
@@ -53,7 +53,7 @@ Amplitude amp;
 AudioIn in;
 float duration = 0;
 float songTimer = 0;
-String[] songs = {"best.mp3","cake.mp3","best.mp3"};
+String[] songs = {"best.mp3","cake.mp3","theway.mp3"};
 int songTracker = -1;
 int[] songDurations = new int[]{67,73,67};
 
@@ -91,6 +91,8 @@ void setup() {
   in = new AudioIn(this, 0);
   in.start();
   amp.input(in);
+
+
 }
 
 //void keyPressed(){
@@ -99,6 +101,7 @@ void setup() {
 //}
 
 void draw() {
+
   background(0);
 
   img.loadPixels();
@@ -126,23 +129,30 @@ void draw() {
 
       if (d > minThresh && d < maxThresh && x > 275) {
         
-        if (d < maxThresh-100) {
-          img.pixels[offset] = color(255, 0, 150, 100);
+        if (d < minThresh+500) {
+          //img.pixels[offset] = color(255, 0, 150, 100);
           player2Circle = true;
           sumXL += x;
           sumYL += y;
           totalPixelsL++;
+          img.pixels[offset] = color(0);
+        }
+        else{
+           img.pixels[offset] = color(255, 0, 150, 100); 
         }
           
       } 
       else if (d > minThresh && d < maxThresh && x < 275) {
         
-        if (d < maxThresh-100) {
-          img.pixels[offset] = color(150, 0, 200, 100);
+        if (d < minThresh+500) {
+          img.pixels[offset] = color(0);
           player1Circle = true;
           sumXR += x;
           sumYR += y;
           totalPixelsR++;
+        }
+        else{
+          img.pixels[offset] = color(150, 0, 200, 100);
         }
           
       } 
@@ -183,17 +193,17 @@ void draw() {
   //   prevAvgYR = avgYR; 
   //}
   
-  if(player1Circle)
-    fill(150, 0, 255);
-  else
-    noFill();
-  ellipse(avgXL, avgYL, 64, 64);
+  //if(player1Circle)
+  //  fill(150, 0, 255);
+  //else
+  //  noFill();
+  //ellipse(avgXL, avgYL, 64, 64);
   
-  if(player2Circle)
-     fill(255, 0, 150);
-  else
-    noFill();
-  ellipse(avgXR, avgYR, 64, 64);
+  //if(player2Circle)
+  //   fill(255, 0, 150);
+  //else
+  //  noFill();
+  //ellipse(avgXR, avgYR, 64, 64);
 
 
   //for (int i = 0; i < 10; i++) {
@@ -225,7 +235,7 @@ void draw() {
          if(songTracker >0)
            file.stop();
          file = new SoundFile(this, songs[songTracker]);
-         file.play();
+         //file.play();
          duration = songDurations[songTracker];
          songTimer = millis();
        }
@@ -270,10 +280,10 @@ void draw() {
     //draw bars
     noStroke();
     fill(bar1);
-    //bar1Y = map(avgYR,50,300,0 ,height-barLength);
-    //bar2Y = map(avgYL,50,300, 0 ,height-barLength);
-    bar1Y = map(mouseY,50,300,0 ,height-barLength);
-    bar2Y = map(mouseY,50,300, 0 ,height-barLength);
+    bar1Y = map(avgYR,50,200,0 ,height-barLength);
+    bar2Y = map(avgYL,50,200, 0 ,height-barLength);
+    //bar1Y = map(mouseY,50,300,0 ,height-barLength);
+    //bar2Y = map(mouseY,50,300, 0 ,height-barLength);
     rect(0,bar1Y,barWidth,barLength);
     fill(bar2);
     rect(width-barWidth,bar2Y,barWidth,barLength);
@@ -394,7 +404,7 @@ void audioVisual(){
       }
       
       //louder??
-      if(amp.analyze()*10 > 1){
+      if(amp.analyze()*100 > 1){
           //if(step > 200)
           //  fill(random(200),150,150,random(150,255));
           //else  
@@ -402,8 +412,8 @@ void audioVisual(){
             
           //noStroke();
           //ellipse(0, random(step), 4, 4);
-          fill(255, 255, 255);
-          ellipse(0, random(200, 400), 10, 10);
+          fill(200, 200, random(200,255),150);
+          ellipse(0, random(150, 300), 6, 6);
       }
     }
   popMatrix();
@@ -455,31 +465,31 @@ void showIntro(){
   //bars
   noStroke();
   fill(bar1);
-  //bar1Y = map(avgYR,50,300,0 ,height-barLength);
-  //bar2Y = map(avgYL,50,300, 0 ,height-barLength);
-  bar1Y = map(mouseY,50,300,0 ,height-barLength);
-  bar2Y = map(mouseY,50,300, 0 ,height-barLength);
+  bar1Y = map(avgYR,50,250,0 ,height-barLength);
+  bar2Y = map(avgYL,50,250, 0 ,height-barLength);
+  //bar1Y = map(mouseY,50,300,0 ,height-barLength);
+  //bar2Y = map(mouseY,50,300, 0 ,height-barLength);
   rect(0,bar1Y,barWidth,barLength);
   fill(bar2);
   rect(width-barWidth,bar2Y,barWidth,barLength);
   
-  avgYL = mouseY;
-  avgYR = mouseY;
+  //avgYL = mouseY;
+  //avgYR = mouseY;
   
   //check for bar position
   if(avgYL < barLength){
-    println(mouseY);
-    player1Top = true;
-  }
-  if(avgYL > height - barLength){
-    println(mouseY);
-    player1Bottom = true;
-  }
-  if(avgYR < barLength){
+    //println(mouseY);
     player2Top = true;
   }
-  if(avgYR > height - barLength){
+  if(avgYL > height - barLength - 20){
+    //println(mouseY);
     player2Bottom = true;
+  }
+  if(avgYR < barLength){
+    player1Top = true;
+  }
+  if(avgYR > height - barLength - 20){
+    player1Bottom = true;
   }
   
   if(player1Top && player1Bottom){
@@ -492,6 +502,8 @@ void showIntro(){
   //game begins
   if(player1Top && player1Bottom && player2Top && player2Bottom){
     //background(0);
+    println("dddd");
+    //frameRate(1);
     fill(0);
     rect(width/2 -200, height/2-100, 400, 150);
     fill(255);
@@ -503,7 +515,12 @@ void showIntro(){
     if(gameBeginsIn == 0){
         intro = false;
         beginGame = true;
+        //frameRate(fps);
     }
+    //else{
+    //  fps = frameRate;
+    //  println(fps); 
+    //}
   }
   
 }
