@@ -38,7 +38,7 @@ int barWidth = 10;
 int player1Score = 0;
 int player2Score = 0;
 boolean beginGame = false;
-int maxScore = 10;
+int maxScore = 1;
 float[][] ballTrail = new float[5][2];
 int ballCounter = 0;
 int[] scoreUpdate = new int[]{0,0};
@@ -58,6 +58,8 @@ String[] songs = {"best.mp3","cake.mp3","happy.flac", "best.mp3","cake.mp3","hap
 int songTracker = -1;
 int[] songDurations = new int[]{68,73,97,68,73,97};
 SoundFile pongSound;
+int soundX = 256;//center of the sound pattern
+int soundY = 212;
 
 //time
 int time;
@@ -138,7 +140,7 @@ void draw() {
           sumXL += x;
           sumYL += y;
           totalPixelsL++;
-          img.pixels[offset] = color(0);
+          img.pixels[offset] = color(255,188,91);
         }
         else{
             //pink
@@ -149,7 +151,7 @@ void draw() {
       else if (d > minThresh && d < maxThresh && x < 275) {
         
         if (d < minThresh+500) {
-          img.pixels[offset] = color(0);
+          img.pixels[offset] = color(255,188,91);  //yellow color for the point of interest
           player1Circle = true;
           sumXR += x;
           sumYR += y;
@@ -356,11 +358,17 @@ void shine(int n){
   int x = 0;
   if(n==2){
       x = width/2;
+      soundX = 3*width/4;
   }
+  else{
+    soundX = width/4;
+  }  
   stroke(255);
   strokeWeight(5);
   noFill();
   rect(x,0,width/2-5, height-5);
+  strokeWeight(2);
+  audioVisual();
 }
 
 void audioVisual(){
@@ -370,7 +378,8 @@ void audioVisual(){
   fill(255);
   stroke(255);
   pushMatrix();
-    translate(width/2, height/2);
+    translate(soundX, soundY);
+    println(soundX, soundY);
     rotate(random(10));
     int step = 100;  //increase radius
     for(int i=0; i<amp.analyze()*10000; i++){
@@ -506,8 +515,8 @@ void showIntro(){
     text(gameBeginsIn,  width/2, height/2);
     gameBeginsIn--;
     if(gameBeginsIn == 0){
-        intro = false;
-        beginGame = true;
+        //intro = false;
+        //beginGame = true;
         //frameRate(fps);
     }
     //else{
